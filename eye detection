@@ -1,0 +1,54 @@
+import cv2
+import numpy as np
+
+
+eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+def detect_eye_state(frame):
+    
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    
+    eyes = eye_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+   
+    eye_open = True
+
+    
+    for (x, y, w, h) in eyes:
+       
+        roi_gray = gray[y:y+h, x:x+w]
+
+       
+        white_pixels = cv2.countNonZero(roi_gray)
+        total_pixels = w * h
+        ratio = white_pixels / total_pixels
+
+       
+        if ratio <= 2:
+            eye_open = False
+            break
+
+    return eye_open
+
+
+cap = cv2.VideoCapture(0)
+
+while True:
+   
+    ret, frame = cap.read()
+
+   
+    eye_open = detect_eye_state(frame)
+
+    
+    cv2.putText(frame, "Eye Open: {}".format("beep" if eye_open else "Yes"), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.imshow("Eye Detection", frame)
+
+   
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+
+cap.release()
+cv2.destroyAllWindows()
